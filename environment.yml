@@ -1,0 +1,11 @@
+name: lp
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11.*
+  - pip
+  - spyder
+  - numpy
+  - scipy
+  - matplotlib
+  - nptdms
