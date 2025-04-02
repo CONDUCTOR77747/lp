@@ -1,0 +1,15 @@
+tdms_path: test_data/T15MD_3008.tdms
+
+signals:
+  LP.Power:
+    channel: LP.15
+    factor: -34
+  LP.09:
+    channel: LP.09
+    factor: 1000 / 50
+  LP.13:
+    channel: LP.03
+    factor: 1000 / 100
+
+# 13.11.2024
+# LP на "зубе"

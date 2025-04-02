@@ -3,9 +3,12 @@ channels:
   - conda-forge
 dependencies:
   - python=3.11.*
-  - pip
-  - spyder
   - numpy
   - scipy
   - matplotlib
   - nptdms
+  - pytest
+  - spyder
+  - git
+  - pip:
+    - auto-py-to-exe

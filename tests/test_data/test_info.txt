@@ -1,0 +1,1 @@
+All tests are based om real pulse of T-15MD tokamak #3008

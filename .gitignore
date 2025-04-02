@@ -1,6 +1,13 @@
+.pytest_cache/
 .spyproject/
 .vscode/
 configs/
+lpy/deprecated/
+lpy/plotting.py
+lpy/wip_save_tdms.py
+lpy/__pycache__/
+tests/.pytest_cache/
+test/__pycache__/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
