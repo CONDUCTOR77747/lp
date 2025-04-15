@@ -8,7 +8,24 @@ Testing load module
 """
 import pytest
 import numpy as np
-from lpy import load
+from lpy import load, extract_shot_number
+
+def test_extract_shot_number():
+    """ Test extract_shot_number function (gets shot numbert from str) """
+    # case 1 standart
+    assert 3008 == extract_shot_number("test_data/T15MD_3008.tdms")
+    # case 2 standart
+    assert 12345 == extract_shot_number("test_data/T15MD_12345.tdms")
+    # case 3 new postfix and prefix
+    prefix = '12345test'
+    postfix = 'test12345'
+    test_str = '12345test12345test12345'
+    assert 12345 == extract_shot_number(test_str, prefix=prefix,
+                                       postfix=postfix)
+    # case 4 invalid input
+    assert 0 == extract_shot_number("test_data/T15MD_.tdms")
+    assert 0 == extract_shot_number("")
+    assert 0 == extract_shot_number(None)
 
 
 def test_load():
@@ -26,7 +43,8 @@ def test_load():
     assert np.allclose(signals['LP.Power'], u_txt, atol=0.1)
     assert np.allclose(signals['LP.09'], u_txt_9, atol=0.1)
     assert np.allclose(signals['LP.13'], u_txt_13, atol=0.1)
+    assert signals['shot'] == 3008
 
 
 if __name__ == "__main__":
-    pytest.main()
+    pytest.main(["test_lpy_load.py"])
