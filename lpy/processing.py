@@ -8,6 +8,23 @@ import numpy as np
 import numpy.typing as npt
 from scipy.signal import fftconvolve
 
+def is_valid_positive(x, **kwargs):
+    """
+    Checks value for None, np.nan, 0, negative value.
+    Parameters
+    ----------
+    x : float
+            Value to check
+    **kwargs:
+        np.isclose(x, 0, **kwargs) function kwargs.
+    Returns
+    -------
+        bool
+            False if x is not positive, True otherwise.
+    """
+    if x is None or np.isnan(x) or x <= 0 or np.isclose(x, 0, **kwargs):
+        return False
+    return True
 
 def exp(x: npt.ArrayLike, k: float, c: float) -> npt.NDArray[np.float64]:
     """
@@ -127,10 +144,32 @@ def remove_peaks_iqr(x, y, q1=25, q3=75, mode="mask"):
         y = y[mask]
     return x, y
 
+def remove_zeros(x, y, **kwargs):
+    """
+    Handle zero values in y.
+
+    Parameters
+    ----------
+    x : array_like
+        Time or x-axis values.
+    y : array_like
+        Data values corresponding to x.
+    **kwargs :
+        kwargs of np.isclose function
+
+    Returns
+    -------
+    tuple
+        (x, y) with removed zero values.
+    """
+    mask = ~np.isclose(y, 0, **kwargs)
+    x = x[mask]
+    y = y[mask]
+    return x, y
 
 def remove_nans(x, y, mode="mask"):
     """
-    Handle NaN values in data.
+    Handle NaN values in y.
 
     Parameters
     ----------
@@ -159,7 +198,7 @@ def remove_nans(x, y, mode="mask"):
 
 def remove_negatives(x, y, mode="mask"):
     """
-    Handle negative values in data.
+    Handle negative values in y.
 
     Parameters
     ----------
@@ -211,5 +250,4 @@ def remove_peaks_by_threshold(x, y, threshold, mode="mask"):
         mask[peaks_idx] = False
         x = x[mask]
         y = y[mask]
-
     return x, y

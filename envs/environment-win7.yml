@@ -1,0 +1,13 @@
+name: lp-win7
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7.9
+  - numpy
+  - scipy
+  - matplotlib
+  - pyyaml
+  - pip
+  - pip:
+    - nptdms==1.6.0
+    - auto-py-to-exe

@@ -50,9 +50,9 @@ class SpanDetector():
 
     def __init__(self, t, u, i):
         self.t, self.u, self.i = t, u, i
-        self.calc_repere_points()
+        self._calc_repere_points()
 
-    def calc_repere_points(self):
+    def _calc_repere_points(self):
         """Compute key reference points (minima/maxima) for span detection."""
         # smooth u, calc gradient of i (di), smooth di
         u_smooth = smooth(self.u, 151, 11)
@@ -65,10 +65,10 @@ class SpanDetector():
         # calc minimums of u
         self.u_mins = argrelextrema(u_smooth, np.less)[0]
         # extract proper repere points of di
-        self.di_mins = self.extract_di_mins(argrelextrema(di, np.less)[0])
-        self.di_maxs = self.extract_di_maxs(argrelextrema(di, np.greater)[0])
+        self.di_mins = self._extract_di_mins(argrelextrema(di, np.less)[0])
+        self.di_maxs = self._extract_di_maxs(argrelextrema(di, np.greater)[0])
 
-    def extract_di_mins(self, di_mins_all):
+    def _extract_di_mins(self, di_mins_all):
         """Extract di minima nearest to each u minimum."""
         di_mins_ok = []
         for umin in self.u_mins:
@@ -81,7 +81,7 @@ class SpanDetector():
                     break
         return np.asarray(di_mins_ok)
 
-    def extract_di_maxs(self, di_maxs_all):
+    def _extract_di_maxs(self, di_maxs_all):
         """Extract di maxima nearest to each u minimum."""
         di_maxs_ok = []
         for umin in self.u_mins:
@@ -147,21 +147,21 @@ class SpanDetector():
             Array of (start, end) indices for Te spans.
         """
         func_dict = {
-            'up': self.te_dt_range_up,
-            'down': self.te_dt_range_down
+            'up': self._te_dt_range_up,
+            'down': self._te_dt_range_down
         }
         return func_dict[sweep_direction](dt_range)
 
-    def te_dt_range_up(self, dt_range):
+    def _te_dt_range_up(self, dt_range):
         """Compute Te spans on rising edge (using di maxima)."""
-        spans = self.column_stack_arrays(self.u_mins, self.di_maxs)
-        spans_te_dt_range = self.dt_mask(spans, dt_range)
+        spans = self._column_stack_arrays(self.u_mins, self.di_maxs)
+        spans_te_dt_range = self._dt_mask(spans, dt_range)
         return spans_te_dt_range
 
-    def te_dt_range_down(self, dt_range):
+    def _te_dt_range_down(self, dt_range):
         """Compute Te spans on falling edge (using di minima)."""
-        spans = self.column_stack_arrays(self.di_mins, self.u_mins)
-        spans_te_dt_range = self.dt_mask(spans, dt_range)
+        spans = self._column_stack_arrays(self.di_mins, self.u_mins)
+        spans_te_dt_range = self._dt_mask(spans, dt_range)
         return spans_te_dt_range
 
     def spans_ne(self, dt_range=(2, 2)):
@@ -180,12 +180,12 @@ class SpanDetector():
             Array of (start, end) indices for ne spans.
         """
         # adjust span boundaries by time shifts
-        spans = self.column_stack_arrays(self.u_mins[0:-1],
+        spans = self._column_stack_arrays(self.u_mins[0:-1],
                                          self.u_mins[1:])
-        spans_ne = self.dt_mask(spans, dt_range)
+        spans_ne = self._dt_mask(spans, dt_range)
         return spans_ne
 
-    def shift_span_boundaries(self, span, left_shift, right_shift, id_max):
+    def _shift_span_boundaries(self, span, left_shift, right_shift, id_max):
         """
         Adjusts span boundaries with shifts, handling edge cases.
 
@@ -222,7 +222,7 @@ class SpanDetector():
 
         return (l_new, r_new)
 
-    def dt_mask(self, spans, dt_range):
+    def _dt_mask(self, spans, dt_range):
         """Adjust span boundaries by time shifts."""
 
         if dt_range is None:
@@ -236,11 +236,11 @@ class SpanDetector():
 
         spans_shifted = []
         for span in spans:
-            span_shifted = self.shift_span_boundaries(span, id_left,
+            span_shifted = self._shift_span_boundaries(span, id_left,
                                                       id_right, id_max)
             spans_shifted.append(span_shifted)
         return np.asarray(spans_shifted)
 
-    def column_stack_arrays(self, x, y):
+    def _column_stack_arrays(self, x, y):
         """ stacks two arrays even if lengths are different (by shortest) """
         return np.array(list(zip(x, y)))

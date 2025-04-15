@@ -24,9 +24,9 @@ from lpy import (load, smooth, TeNeAnalyzer, remove_negatives,
 
 if __name__ == '__main__':
     # Load data
-    signals = load("configs/3162.yml")
-    probe_name = 'LP.05'
-    shot = 3008
+    signals = load("configs/3008_home.yml")
+    probe_name = 'LP.13'
+    shot = signals['shot']
 
     t = signals['time']
     u = signals['LP.Power']
@@ -37,17 +37,17 @@ if __name__ == '__main__':
     # i = smooth(i, 3, 11)
 
     tna = TeNeAnalyzer(t, u, i)
-    te_t, te, ne, info = tna.calc_te_ne(
-        n_avg=3,
-        dt_range_te=(0,0),
-        probe_area=np.pi*(5)**2/4*np.sin(np.deg2rad(15)),
-        u_range=(0, 15),
-        dt_range_ne=(2,2),
-        sweep_direction='up',
-        fit_method='linear'
-        )
+    parameters = {
+        'n_avg': 1,
+        'dt_range_te': (0, 0),
+        'u_range': (0, 15),
+        'dt_range_ne': (2, 2),
+        'sweep_direction': 'up',
+        'fit_method': 'exponential',
+        'te_threshold': 40,
+        }
+    res_t, te, ne, info = tna.calc_te_ne(parameters)
 
-    # te_t, te = remove_negatives(te_t, te)
     # te_t, te = remove_peaks_by_threshold(te_t, te, 150, mode='zeros')
 
 #%%
@@ -69,12 +69,14 @@ if __name__ == '__main__':
         ax1.axvspan(t[span[0]], t[span[1]], color='red', alpha=0.2)
 
     # ax2
-    ax2.plot(te_t, te, 'o', color='green')
+    ax2.plot(res_t, te, 'o', color='green')
     ax2.set_ylabel('Te, eV')
+    # te_errs = [kerr/k**2 for k, _, kerr, _ in info]
+    # ax2.errorbar(te_t, te, yerr=te_errs, fmt='o', ecolor='black', capsize=5, color='green')
     ax2.grid()
 
     # ax3
-    ax3.plot(te_t, ne, 'o', color='red')
+    ax3.plot(res_t, ne, 'o', color='red')
     ax3.set_xlabel('t, ms')
     ax3.set_ylabel('ne, 10^18 m^-3')
     ax3.grid()

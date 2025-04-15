@@ -1,14 +1,16 @@
-name: lp
+name: lp-win7-pytest
 channels:
   - conda-forge
 dependencies:
-  - python=3.11.*
+  - python=3.7.9
   - numpy
   - scipy
   - matplotlib
-  - nptdms
+  - pyyaml
+  - pip
   - pytest
-  - spyder
-  - git
+  - pytest-mock
+  - pytest-qt
   - pip:
+    - nptdms==1.6.0
     - auto-py-to-exe

@@ -7,9 +7,10 @@ Created on Mon Feb 17 17:14:27 2025
 Module contains function to load
 """
 # %% imports
-from pathlib import Path
+import re
 import yaml
 import numpy as np
+from pathlib import Path
 import matplotlib.pyplot as plt
 from scipy.signal import resample
 from nptdms import TdmsFile
@@ -18,8 +19,38 @@ from nptdms import TdmsFile
 GROUP = 'PXIe-6358'  # group name in tdms files (seems to be constant for now)
 # %% funcs
 
+def extract_shot_number(file_path: str, prefix: str = "T15MD_",
+                        postfix: str = ".tdms") -> int:
+    """
+    Extracts the shot number from a .tdms file path with the given prefix.
 
-def load(cfg_path: str) -> dict:
+    Args:
+        file_path (str): Full path to the .tdms file (e.g., "C:/data/T15MD_3162.tdms")
+        prefix (str): Prefix before the shot number (default: "T15MD_")
+        postfix (str): Postfix after the shot number (default: ".tdms")
+
+    Returns:
+        int: Extracted shot number
+
+    Raises:
+        ValueError: If no shot number is found or if the number is invalid
+    """
+    if file_path is None:
+        return 0
+
+    # Escape special regex characters in the prefix and construct pattern
+    escaped_prefix = re.escape(prefix)
+    pattern = rf"{escaped_prefix}(\d+){postfix}"
+
+    match = re.search(pattern, file_path)
+    if not match:
+        return 0 # default error shot number
+    try:
+        return int(match.group(1))
+    except ValueError:
+        raise ValueError(f"Invalid shot number format: {match.group(1)}")
+
+def load(cfg_path: str, cfg=None) -> dict:
     """
     Load LP signals using config file.
 
@@ -38,28 +69,22 @@ def load(cfg_path: str) -> dict:
         - "LP.Power" is a probe voltage in [V]
         - "LP.*" is a probe current in [mA], where * - number of a probe
     """
-    cfg_path = str(Path(cfg_path).resolve())
-
-    # load cfg file
-    with open(cfg_path, encoding='utf-8') as stream:
-        cfg = yaml.safe_load(stream)
+    if cfg_path is not None:
+        cfg_path = str(Path(cfg_path).resolve())
+        # load cfg file
+        with open(cfg_path, encoding='utf-8') as stream:
+            cfg = yaml.safe_load(stream)
+    elif cfg is None:
+        raise ValueError("Ошибка в конфигурации")
 
     # get paths from cfg
+    if 'tdms_path' not in cfg:
+        raise ValueError("Отсутствует путь к TDMS файлу")
     input_path = str(Path(cfg['tdms_path']).resolve())
-
     # create signals dict already factored
     signals = {}
 
-    if 'bolometer' in cfg:
-        bol_path = cfg['bolometer']['path']
-
-        # load tdms file bolometer
-        with TdmsFile.open(bol_path) as bol_file:
-            bol_file = TdmsFile.read(bol_path)
-        group_name = cfg['bolometer']['group']
-        channel_name = cfg['bolometer']['channel']
-        data_channel = bol_file[group_name][channel_name]
-        signals['bolometer'] = data_channel[:]
+    signals['shot'] = extract_shot_number(input_path)
 
     # load tdms file LP
     with TdmsFile.open(input_path) as tdms_file:
@@ -85,11 +110,6 @@ def load(cfg_path: str) -> dict:
             time = np.linspace(0.0, (t_len * dt) * 1000, num=t_len)  # [ms]
             signals['time'] = time
 
-            if 'bolometer' in signals:
-                signals['bolometer'] = resample(signals['bolometer'],
-                                                len(time))
-                signals['bolometer'] = 150 * signals['bolometer'] / \
-                    max(signals['bolometer'])
     return signals
 
 
