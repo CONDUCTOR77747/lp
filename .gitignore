@@ -2,6 +2,7 @@
 .spyproject/
 .vscode/
 configs/
+output/
 deprecated/
 lpy/__pycache__/
 tests/.pytest_cache/

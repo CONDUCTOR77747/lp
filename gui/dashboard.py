@@ -86,17 +86,20 @@ class MainWindow(QMainWindow):
 
         # Save data
         # Create the Save As submenu
-        saveAsMenu = QMenu('Сохранить', self)
+        saveAsMenu = QMenu('Сохранить как txt', self)
         # Add options to the Save Te and ne As submenu
-        saveTeneAsTxtAction = QAction('Te и ne для всех зондов как .txt', self)
+        saveTeneAsTxtAction = QAction('Te, ne для всех зондов', self)
         saveTeneAsTxtAction.triggered.connect(self.save_te_ne_as_txt)
-
         # Add options to the Save Te and ne As submenu
-        saveFPAsTxtAction = QAction('Плавающий потенциал для .FP зондов как .txt', self)
+        savecurrTeneAsTxtAction = QAction('Te, ne для текущего зонда', self)
+        savecurrTeneAsTxtAction.triggered.connect(self.save_curr_te_ne_as_txt)
+        # Add options to the Save Te and ne As submenu
+        saveFPAsTxtAction = QAction('Плавающий потенциал для всех .FP зондов', self)
         saveFPAsTxtAction.triggered.connect(self.save_fp_as_txt)
 
         # add options to file menu
         saveAsMenu.addAction(saveTeneAsTxtAction)
+        saveAsMenu.addAction(savecurrTeneAsTxtAction)
         saveAsMenu.addAction(saveFPAsTxtAction)
         file_menu.addMenu(saveAsMenu)
 
@@ -355,6 +358,8 @@ class MainWindow(QMainWindow):
         """Создаем виджет для Matplotlib графика с toolbar"""
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
+        self.canvas.setFocusPolicy(Qt.ClickFocus)
+        self.canvas.setFocus()
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # Добавляем стандартный toolbar Matplotlib
         self.toolbar = NavigationToolbar(self.canvas, self)
@@ -490,16 +495,21 @@ class MainWindow(QMainWindow):
                                        self.current_voltage_plot_on_ctrl_click)
 
     def on_key_press(self, event):
-        if event.key == 'control':
+        """ Checks if CTRL button pressed. Used for Current-Voltage Plot """
+        if event.key in ['ctrl', 'control']:
             self.ctrl_is_held = True
 
     def on_key_release(self, event):
-        if event.key == 'control':
+        """ Checks if CTRL button released. Used for Current-Voltage Plot """
+        if event.key in ['ctrl', 'control']:
             self.ctrl_is_held = False
 
     def current_voltage_plot_on_ctrl_click(self, event):
-        if not ('ctrl' in event.modifiers):
+        """ Plots Current-Volatage Plot on CTRL+Click on axes """
+        # check if control is pressed
+        if not self.ctrl_is_held:
             return
+        self.ctrl_is_held = False # release control after success ctrl+click
 
         idx = self.tna.find_nearest_info(event.xdata)
         try:
@@ -601,6 +611,31 @@ class MainWindow(QMainWindow):
             default_file_name = f"{shot}_LP_Te_ne"
             save_as_txt(data_to_save, headers, default_file_name)
 
+    def save_curr_te_ne_as_txt(self):
+        """ Save Te and ne for current probe as txt """
+        if not hasattr(self, 'signals'):
+            self.open_configurator()
+        else:
+            # get time, u, shot, probe_name, currents, fp_signals (not used)
+            t, u, shot, currents, fp_singals = self.parse_signals_dict()
+
+            # create TeNeAnalyzer instance
+            tna = TeNeAnalyzer(t, u, currents[self.probe_name])
+            # calculate Te, Ne using given parameters
+            res_t, te, ne, info = tna.calc_te_ne(self.parameters)
+
+            data_columns = [res_t, te, ne]
+            headers = [
+                f'{self.probe_name}.time',
+                f'{self.probe_name}.Te',
+                f'{self.probe_name}.ne'
+            ]
+
+            # Combine all columns into a 2D array (rows = data points, columns = variables)
+            data_to_save = np.column_stack(data_columns)
+            default_file_name = f"{shot}_LP_Te_ne_{self.probe_name}"
+            save_as_txt(data_to_save, headers, default_file_name)
+
     def save_fp_as_txt(self):
         """Saves te and ne data as txt """
         if not hasattr(self, 'signals'):
@@ -608,6 +643,12 @@ class MainWindow(QMainWindow):
         else:
             # get time, u, shot, probe_name, currents (not used), fp_signals
             t, u, shot, currents, fp_singals = self.parse_signals_dict()
+
+            if len(fp_singals) == 0:
+                pop_up_window('Ошибка сохранения',
+                'Отсутствуют зонды с меткой плавающего потенциала .FP\n\
+(см. Инструкцию в конфигураторе)')
+                return
 
             # data arrays time included already
             data_columns = [t]  # List to collect all columns (res_t, te, ne for each probe)

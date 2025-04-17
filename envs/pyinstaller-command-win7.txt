@@ -1,0 +1,1 @@
+pyinstaller --noconfirm --onedir --windowed --add-data "C:\Users\Student\YandexDisk\NRCKI\Students\Ammosov\Projects\LP\lp\tests\test_data;tests/test_data/" --add-data "C:\Users\Student\YandexDisk\NRCKI\Students\Ammosov\Projects\LP\lp\gui\resources;gui/resources/"  "C:\Users\Student\YandexDisk\NRCKI\Students\Ammosov\Projects\LP\lp\main_app.py"

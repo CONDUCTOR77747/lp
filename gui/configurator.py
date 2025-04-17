@@ -16,12 +16,12 @@ from PyQt5.QtGui import QIcon
 import yaml
 from .defaults import ICON_PATH, INFO
 from .utils import pop_up_window, verify_cfg
-from lpy import load
+from lpy import load, extract_shot_number
 
 class Configurator(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Редактор конфигурации")
+        self.setWindowTitle("Конфигуратор")
         self.setMinimumSize(600, 400)
         self.setWindowIcon(QIcon(ICON_PATH))
 
@@ -133,7 +133,7 @@ class Configurator(QDialog):
             self,
             "Загрузить конфигурацию",
             "",
-            "YAML files (*.yaml *.yml);;Text files (*.txt);;All files (*)"
+            "YAML files (*.yml *.yaml);;Text files (*.txt);;All files (*)"
         )
 
         if file_path:
@@ -150,12 +150,18 @@ class Configurator(QDialog):
                               selectable_text=True)
 
     def save_config(self):
+        # create default save name from tdms_path if possible
+        default_filename = ""
+        tdms_path = self.tdms_path_entry.text()
+        if tdms_path is not None and len(tdms_path) > 0:
+            default_filename = str(extract_shot_number(tdms_path))
+
         """Сохраняет конфигурацию в файл."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Сохранить конфигурацию",
-            "",
-            "YAML files (*.yaml *.yml);;Text files (*.txt);;All files (*)",
+            default_filename,
+            "YAML files (*.yml *.yaml);;Text files (*.txt);;All files (*)",
             options=QFileDialog.Options()
         )
 

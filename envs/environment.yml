@@ -13,6 +13,7 @@ dependencies:
   - pytest-mock
   - spyder
   - git
+  - make
   - pip
   - pip:
     - auto-py-to-exe
