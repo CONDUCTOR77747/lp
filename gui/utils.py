@@ -8,6 +8,7 @@ Utils functions to create windows and similar elements
 """
 
 import numpy as np
+import scipy.interpolate as interpolate
 from pathlib import Path
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -34,8 +35,32 @@ def verify_cfg(cfg):
         if Path(cfg['tdms_path']).exists():
             return True
 
+def align_signals(time1, signal, time2):
+    """
+    Aligns signal1 along signal2 time axis.
+
+    Parameters:
+
+    time1 : array-like
+        Time points for the first signal.
+    signal : array-like
+        First signal values.
+    time2 : array-like
+        Time points for the second signal.
+
+    Returns : array-like
+        Interpolated signal values aligned with time2.
+    """
+    # Interpolate signal1 to match the time points of signal2
+    interpolator = interpolate.interp1d(time1, signal, bounds_error=False,
+                                         fill_value=0)
+    return interpolator(time2)
+
 def save_as_txt(data, headers, default_file_name=""):
-    """ Saves data into columns with headers as txt """
+    """
+    Saves data into columns with headers as txt
+    Using QT FileDialog interface
+    """
     # Open a file dialog to select where to save the file
     options = QFileDialog.Options()
     file_path, _ = QFileDialog.getSaveFileName(
@@ -54,9 +79,8 @@ def save_as_txt(data, headers, default_file_name=""):
             file_path,
             data,
             header='\t'.join(headers),  # Join headers with tab separator
-            fmt='%s',                   # Format for saving data (adjust as needed)
+            fmt='%.3f',                   # Format for saving data (adjust as needed)
             delimiter='\t',             # Use tab as the separator for data
-            comments=''                 # Prevent '#' before the header
         )
     except Exception as e:
         print(f"Error saving file: {e}")

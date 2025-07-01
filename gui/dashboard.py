@@ -5,11 +5,12 @@ Created on Wed Apr  2 16:00:05 2025
 @author: Ammosov
 """
 
-import numpy as np
 import yaml
+import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 import matplotlib.pyplot as plt
+import matplotlib.style as mplstyle
 from matplotlib.figure import Figure
 from matplotlib.widgets import MultiCursor
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg
@@ -23,7 +24,7 @@ from PyQt5.QtWidgets import (QWidget, QAction, QDialog, QSpinBox, QComboBox,
 
 from .configurator import Configurator
 from .defaults import ICON_PATH, INFO, TIPS
-from .utils import (pop_up_window, verify_cfg, save_as_txt)
+from .utils import (pop_up_window, verify_cfg, save_as_txt, align_signals)
 from lpy import PROBE_AREA_DEFAULT, TeNeAnalyzer, remove_negatives
 
 class MainWindow(QMainWindow):
@@ -84,23 +85,23 @@ class MainWindow(QMainWindow):
         manager_action.triggered.connect(self.open_configurator)
         file_menu.addAction(manager_action)
 
-        # Save data
+        # Save data as TXT
         # Create the Save As submenu
         saveAsMenu = QMenu('Сохранить как txt', self)
-        # Add options to the Save Te and ne As submenu
-        saveTeneAsTxtAction = QAction('Te, ne для всех зондов', self)
-        saveTeneAsTxtAction.triggered.connect(self.save_te_ne_as_txt)
-        # Add options to the Save Te and ne As submenu
-        savecurrTeneAsTxtAction = QAction('Te, ne для текущего зонда', self)
-        savecurrTeneAsTxtAction.triggered.connect(self.save_curr_te_ne_as_txt)
-        # Add options to the Save Te and ne As submenu
-        saveFPAsTxtAction = QAction('Плавающий потенциал для всех .FP зондов', self)
-        saveFPAsTxtAction.triggered.connect(self.save_fp_as_txt)
+        # Add options to the Save Te and ne for all probes As submenu
+        saveTxtTeNeAction = QAction('Te, ne', self)
+        saveTxtTeNeAction.triggered.connect(self.save_txt_te_ne)
+        # Add options to the Save Te and ne for current probe As submenu
+        saveTxtU_I = QAction('U, I', self)
+        saveTxtU_I.triggered.connect(self.save_txt_u_i)
+        # Add options to the Save FP submenu
+        saveTxtFpAction = QAction('Плавающий потенциал для всех .FP зондов', self)
+        saveTxtFpAction.triggered.connect(self.save_txt_fp)
 
         # add options to file menu
-        saveAsMenu.addAction(saveTeneAsTxtAction)
-        saveAsMenu.addAction(savecurrTeneAsTxtAction)
-        saveAsMenu.addAction(saveFPAsTxtAction)
+        saveAsMenu.addAction(saveTxtTeNeAction)
+        saveAsMenu.addAction(saveTxtU_I)
+        saveAsMenu.addAction(saveTxtFpAction)
         file_menu.addMenu(saveAsMenu)
 
         # Help menu (manual)
@@ -356,6 +357,7 @@ class MainWindow(QMainWindow):
 
     def create_matplotlib_widget(self, parent_layout):
         """Создаем виджет для Matplotlib графика с toolbar"""
+        mplstyle.use('fast') # ускорение отрисовки данных
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
         self.canvas.setFocusPolicy(Qt.ClickFocus)
@@ -580,38 +582,7 @@ class MainWindow(QMainWindow):
 
             return t, u, shot, currents, fp_signals
 
-    def save_te_ne_as_txt(self):
-        """Saves te and ne data as txt """
-        if not hasattr(self, 'signals'):
-            self.open_configurator()
-        else:
-            # get time, u, shot, probe_name, currents, fp_signals (not used)
-            t, u, shot, currents, fp_singals = self.parse_signals_dict()
-
-            data_columns = []  # List to collect all columns (res_t, te, ne for each probe)
-            headers = []       # List to collect headers
-            for probe_name, current in currents.items():
-
-                # create TeNeAnalyzer instance
-                tna = TeNeAnalyzer(t, u, current)
-                # calculate Te, Ne using given parameters
-                res_t, te, ne, info = tna.calc_te_ne(self.parameters)
-                # Append data as columns
-                data_columns.extend([res_t, te, ne])
-
-                # Append headers for these columns
-                headers.extend([
-                    f'{probe_name}.time',
-                    f'{probe_name}.Te',
-                    f'{probe_name}.ne'
-                ])
-
-            # Combine all columns into a 2D array (rows = data points, columns = variables)
-            data_to_save = np.column_stack(data_columns)
-            default_file_name = f"{shot}_LP_Te_ne"
-            save_as_txt(data_to_save, headers, default_file_name)
-
-    def save_curr_te_ne_as_txt(self):
+    def save_txt_te_ne(self):
         """ Save Te and ne for current probe as txt """
         if not hasattr(self, 'signals'):
             self.open_configurator()
@@ -626,18 +597,39 @@ class MainWindow(QMainWindow):
 
             data_columns = [res_t, te, ne]
             headers = [
-                f'{self.probe_name}.time',
-                f'{self.probe_name}.Te',
-                f'{self.probe_name}.ne'
+                f'{self.probe_name}.time [ms]',
+                f'{self.probe_name}.Te [eV]',
+                f'{self.probe_name}.ne [10^18 m^-3]'
             ]
 
             # Combine all columns into a 2D array (rows = data points, columns = variables)
             data_to_save = np.column_stack(data_columns)
-            default_file_name = f"{shot}_LP_Te_ne_{self.probe_name}"
+            default_file_name = f"{shot}_{self.probe_name}_Te_ne"
             save_as_txt(data_to_save, headers, default_file_name)
 
-    def save_fp_as_txt(self):
-        """Saves te and ne data as txt """
+    def save_txt_u_i(self):
+        """ Save I, Te and ne for current probe as txt """
+        if not hasattr(self, 'signals'):
+            self.open_configurator()
+        else:
+            # get time, u, shot, probe_name, currents, fp_signals (not used)
+            t, u, shot, currents, fp_singals = self.parse_signals_dict()
+
+            # construct data array to save
+            data_columns = [t, u, currents[self.probe_name]]
+            headers = [
+                f'{self.probe_name}.time [ms]',
+                f'{self.probe_name}.U [U]',
+                f'{self.probe_name}.I [mA]',
+            ]
+
+            # Combine all columns into a 2D array (rows = data points, columns = variables)
+            data_to_save = np.column_stack(data_columns)
+            default_file_name = f"{shot}_{self.probe_name}_U_I"
+            save_as_txt(data_to_save, headers, default_file_name)
+
+    def save_txt_fp(self):
+        """Saves floating potentials data as txt """
         if not hasattr(self, 'signals'):
             self.open_configurator()
         else:

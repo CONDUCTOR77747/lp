@@ -50,6 +50,47 @@ def extract_shot_number(file_path: str, prefix: str = "T15MD_",
     except ValueError:
         raise ValueError(f"Invalid shot number format: {match.group(1)}")
 
+def load_text(cfg_path: str, cfg=None) -> dict:
+    """ Load LP signals using config file but from txt """
+    if cfg_path is not None:
+        cfg_path = str(Path(cfg_path).resolve())
+        # load cfg file
+        with open(cfg_path, encoding='utf-8') as stream:
+            cfg = yaml.safe_load(stream)
+    elif cfg is None:
+        raise ValueError("Ошибка в конфигурации")
+
+    # get paths from cfg
+    if 'path' not in cfg:
+        raise ValueError("Отсутствует путь к файлу")
+    input_path = str(Path(cfg['path']).resolve())
+
+    # create signals dict already factored
+    signals = {}
+
+    signals['shot'] = extract_shot_number(input_path,  postfix=".txt")
+
+    # load tdms file LP
+    with open(input_path, 'r', encoding='utf-8') as f:
+        headers = f.readline().strip().split()
+        data = np.loadtxt('file.txt', skiprows=1)
+
+    for signame, props in cfg['signals'].items():
+        channel_name = props.get('channel')
+        factor = props['factor']
+
+        signals[signame] = data
+
+        # add time to signals dict
+        if 'time' not in signals:
+            rate = data_channel.properties['RATE']
+            dt = 1 / rate
+            t_len = len(signals[signame])
+            time = np.linspace(0.0, (t_len * dt) * 1000, num=t_len)  # [ms]
+            signals['time'] = time
+
+    return signals
+
 def load(cfg_path: str, cfg=None) -> dict:
     """
     Load LP signals using config file.
@@ -81,9 +122,9 @@ def load(cfg_path: str, cfg=None) -> dict:
     if 'tdms_path' not in cfg:
         raise ValueError("Отсутствует путь к TDMS файлу")
     input_path = str(Path(cfg['tdms_path']).resolve())
+
     # create signals dict already factored
     signals = {}
-
     signals['shot'] = extract_shot_number(input_path)
 
     # load tdms file LP
