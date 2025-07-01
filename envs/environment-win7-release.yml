@@ -1,4 +1,4 @@
-name: lp-win7-pytest
+name: lp-win7-release
 channels:
   - conda-forge
 dependencies:
@@ -8,9 +8,6 @@ dependencies:
   - matplotlib
   - pyyaml
   - pip
-  - pytest
-  - pytest-mock
-  - pytest-qt
   - pip:
     - nptdms==1.6.0
     - auto-py-to-exe

@@ -5,6 +5,7 @@ Created on Fri Mar  7 17:01:19 2025
 @author: Student
 """
 
+import os
 import sys
 from pathlib import Path
 from PyQt5.QtWidgets import (QApplication , QDialog, QLabel, QLineEdit,
@@ -99,14 +100,22 @@ class Configurator(QDialog):
         """Открывает диалоговое окно для выбора TDMS файла."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Выберите TDMS файл",
+            "Выберите файл",
             "",
-            "TDMS files (*.tdms);;All files (*)"
+            "TDMS files (*.tdms);; TXT files (*.txt);; All files (*)"
         )
         if file_path:
             self.tdms_path_entry.setText(file_path)
 
-    def ok_button_pushed(self):
+    def get_file_format(self, file_path):
+        """ Returns file extention str from path to file e.g. '.txt' """
+        if file_path:
+            filename = os.path.basename(file_path)
+            file_root, file_ext = os.path.splitext(filename)
+            return file_ext
+
+    def apply_tdms_config(self):
+        """ Apply config with TDMS file """
         try:
             # clear previous cfg
             self.cfg = {}
@@ -122,6 +131,16 @@ class Configurator(QDialog):
         else:
             pop_up_window("Ошибка загрузки данных",
                         "Проверьте наличие TDMS файла и корректность сигналов")
+
+    # def apply_txt_config(self):
+
+
+    def ok_button_pushed(self):
+        file_format = self.get_file_format(self.tdms_path_entry.text())
+        if file_format == '.tdms':
+            self.apply_tdms_config()
+        elif file_format == '.txt':
+            self.apply_txt_config()
 
     def load_config(self):
         """Загружает конфигурацию из файла."""

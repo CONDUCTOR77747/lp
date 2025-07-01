@@ -1,4 +1,4 @@
-name: lp-win7
+name: lp-dev-win7
 channels:
   - conda-forge
 dependencies:
@@ -7,7 +7,13 @@ dependencies:
   - scipy
   - matplotlib
   - pyyaml
+  - spyder
   - pip
+  - pytest
+  - pytest-mock
+  - pytest-qt
+  - git
+  - make
   - pip:
     - nptdms==1.6.0
     - auto-py-to-exe

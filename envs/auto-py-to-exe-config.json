@@ -1,0 +1,81 @@
+{
+ "version": "auto-py-to-exe-configuration_v1",
+ "pyinstallerOptions": [
+  {
+   "optionDest": "noconfirm",
+   "value": true
+  },
+  {
+   "optionDest": "filenames",
+   "value": "C:/Users/Student/YandexDisk/NRCKI/Students/Ammosov/Projects/LP/lp/main.py"
+  },
+  {
+   "optionDest": "onefile",
+   "value": false
+  },
+  {
+   "optionDest": "console",
+   "value": false
+  },
+  {
+   "optionDest": "icon_file",
+   "value": "C:/Users/Student/YandexDisk/NRCKI/Students/Ammosov/Projects/LP/lp/gui/resources/icon.ico"
+  },
+  {
+   "optionDest": "name",
+   "value": "LP Analysis"
+  },
+  {
+   "optionDest": "clean_build",
+   "value": false
+  },
+  {
+   "optionDest": "strip",
+   "value": false
+  },
+  {
+   "optionDest": "noupx",
+   "value": false
+  },
+  {
+   "optionDest": "disable_windowed_traceback",
+   "value": false
+  },
+  {
+   "optionDest": "uac_admin",
+   "value": false
+  },
+  {
+   "optionDest": "uac_uiaccess",
+   "value": false
+  },
+  {
+   "optionDest": "argv_emulation",
+   "value": false
+  },
+  {
+   "optionDest": "bootloader_ignore_signals",
+   "value": false
+  },
+  {
+   "optionDest": "excludes",
+   "value": "pytest pytest-mock pytest-qt git spyder make pip"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Student/YandexDisk/NRCKI/Students/Ammosov/Projects/LP/lp/gui/resources;gui/resources/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Student/YandexDisk/NRCKI/Students/Ammosov/Projects/LP/lp/tests/test_data/3008.yml;tests/test_data/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Student/YandexDisk/NRCKI/Students/Ammosov/Projects/LP/lp/tests/test_data/T15MD_3008.tdms;tests/test_data/"
+  }
+ ],
+ "nonPyinstallerOptions": {
+  "increaseRecursionLimit": true,
+  "manualArguments": ""
+ }
+}
