@@ -31,8 +31,7 @@ class TeNeAnalyzer():
 
     Example:
         tna = TeNeAnalyzer(t, u, i, spans_te, spans_ne)
-        te, info = tna.calc_te(n_avg, u_range, fit_method='linear')
-        ne, info = tna.calc_ne()
+        t, te, ne, info = tna.calc_te_ne(parameters)
     """
     def __init__(self, t, u, i):
         self.t, self.u, self.i = t, u, i
@@ -52,6 +51,8 @@ class TeNeAnalyzer():
         --------------
         u_range : tuple(float, float), Default: (0,0)
             Sets min and max value to Voltage used in calculation.
+        lni_range : tuple(float, float), Default: (0,0)
+            Sets min and max value to ln(Current) used in calculation.
         n_avg : int, Default: 1
             Window size corresponds to amount of scans to take into account.
         te_threshold : float, Default: 0
@@ -79,6 +80,7 @@ class TeNeAnalyzer():
         """
         # setup parameters and defaults
         u_range = parameters.get('u_range', (0,0))
+        lni_range = parameters.get('lni_range', (0,0))
         n_avg = parameters.get('n_avg', 1)
         te_threshold = parameters.get('te_threshold', 0)
         sweep_direction = parameters.get('sweep_direction', 'up')
@@ -128,10 +130,11 @@ class TeNeAnalyzer():
                 cv_plot_data.append(([], [], [], [], 0, 0))
                 continue
 
-            te, info = self._fit_data(uu, ii, u_range, fit_method=fit_method)
+            te, info = self._fit_data(uu, ii, u_range, lni_range, fit_method=fit_method)
             time_mean = tt.mean()
             # for Current-Voltage Plot
             u_m, i_m = self._u_mask(uu, ii, u_range) # masked by u_range
+            u_m, i_m = self._lni_mask(u_m, i_m, lni_range) # masked by lni_range
             # u_wide, i_wide, u, i, k, c, time_mean
             cv_plot_data.append((uu, ii, u_m, i_m, info[0], info[1], time_mean))
 
@@ -177,15 +180,16 @@ class TeNeAnalyzer():
         res_ne.append(res[2])
         res_info.append(res[3])
 
-    def _fit_data(self, u, i, u_range, fit_method='linear'):
+    def _fit_data(self, u, i, u_range, lni_range, fit_method='linear'):
         """ Filter data for fitting and use chosen method """
         fit_dict = {
             'linear': self._te_linear_fit,
             'exponential': self._te_exponential_fit
             }
-        u_masked, i_masked = self._u_mask(u, i, u_range)
+        u, i = self._u_mask(u, i, u_range)
+        u, i = self._lni_mask(u, i, lni_range)
         # self.u_i_masked.append((u_masked, i_masked)) # for Current-Voltage Plot
-        te, info = fit_dict[fit_method](u_masked, i_masked)
+        te, info = fit_dict[fit_method](u, i)
         return te, info
 
     def _te_linear_fit(self, u, i):
@@ -231,6 +235,18 @@ class TeNeAnalyzer():
             return u, i
 
         mask = (u_range[0] < u) & (u < u_range[1])
+        u = u[mask]
+        i = i[mask]
+        return u, i
+
+    def _lni_mask(self, u, i, lni_range):
+        """ Mask voltage and current values by given ln(Current) range """
+        if lni_range is None or lni_range[0] == 0 and lni_range[1] == 0:
+            return u, i
+
+        u, i = remove_negatives(u, i)
+        lni = np.log(i)
+        mask = (lni_range[0] < lni) & (lni < lni_range[1])
         u = u[mask]
         i = i[mask]
         return u, i

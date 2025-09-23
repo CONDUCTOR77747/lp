@@ -30,7 +30,7 @@ def test_browse_tdms_path(qtbot, configurator, mocker):
     assert configurator.tdms_path_entry.text() == "test_file.tdms"
 
 def test_load_config(qtbot, configurator, mocker):
-    """Test loading a configuration file."""
+    """Test loading a configuration file. No parameters included."""
     mock_config = {
         "tdms_path": "test_file.tdms",
         "signals": {
@@ -57,7 +57,75 @@ def test_load_config(qtbot, configurator, mocker):
     )
     assert configurator.signals_text.toPlainText().strip() == expected_signals_text
 
-def test_save_config(qtbot, configurator, mocker):
+def test_load_config_with_parameters(qtbot, configurator, mocker):
+    """Test loading a configuration file. Parameters are included."""
+    mock_config = {
+        "tdms_path": "test_file.tdms",
+        "signals": {
+            "signal1": {"channel": "ch1", "factor": 1.0},
+            "signal2": {"channel": "ch2", "factor": 2.0},
+            },
+        "parameters": {
+            "dt_range_ne": [2.0, 2.0],
+            "dt_range_te": [0.0, 0.0],
+            "lni_range": [0.0, 0.0],
+            "n_avg": 5,
+            "probe": "LP.13",
+            "probe_area": 5.082,
+            "smooth_i": [1, 1],
+            "smooth_u": [1, 1],
+            "sweep_direction": "up",
+            "te_threshold": 50.0,
+            "u_range": [0.0, 0.0],
+            },
+        }
+    mocker.patch("PyQt5.QtWidgets.QFileDialog.getOpenFileName", return_value=("config.yaml", ""))
+    mocker.patch("builtins.open", mocker.mock_open(read_data=yaml.dump(mock_config)))
+
+    configurator.load_config()
+
+    # Verify TDMS path
+    assert configurator.tdms_path_entry.text() == "test_file.tdms"
+
+    # Verify signals text
+    expected_signals_text = (
+        "signal1:\n"
+        "  channel: ch1\n"
+        "  factor: 1.0\n"
+        "signal2:\n"
+        "  channel: ch2\n"
+        "  factor: 2.0"
+    )
+    assert configurator.signals_text.toPlainText().strip() == expected_signals_text
+
+    expected_parameters_text = (
+        "dt_range_ne:\n"
+        "- 2.0\n"
+        "- 2.0\n"
+        "dt_range_te:\n"
+        "- 0.0\n"
+        "- 0.0\n"
+        "lni_range:\n"
+        "- 0.0\n"
+        "- 0.0\n"
+        "n_avg: 5\n"
+        "probe: LP.13\n"
+        "probe_area: 5.082\n"
+        "smooth_i:\n"
+        "- 1\n"
+        "- 1\n"
+        "smooth_u:\n"
+        "- 1\n"
+        "- 1\n"
+        "sweep_direction: up\n"
+        "te_threshold: 50.0\n"
+        "u_range:\n"
+        "- 0.0\n"
+        "- 0.0"
+        )
+    assert configurator.parameters_text.toPlainText().strip() == expected_parameters_text
+
+def test_save_config(qtbot, configurator, mocker): # !!! update
     """Test saving a configuration file."""
     # Set up initial data in the UI
     configurator.tdms_path_entry.setText("test_file.tdms")
@@ -112,7 +180,7 @@ def test_save_config(qtbot, configurator, mocker):
 
 
 def test_ok_button_pushed(qtbot, configurator, mocker):
-    """Test the behavior of the OK button."""
+    """Test the behavior of the OK button. No parameters included."""
     # Mock load function and signals processing
     mock_load = mocker.patch("gui.configurator.load", return_value="processed_signals")
 
@@ -149,5 +217,6 @@ def test_ok_button_pushed(qtbot, configurator, mocker):
 
     mock_load.assert_called_once_with(None, expected_cfg)
 
+
 if __name__ == '__main__':
-    pytest.main(['test_gui_configurator.py'])
+    pytest.main(['test_gui_configurator.py', '-vv'])

@@ -30,7 +30,7 @@ def pop_up_window(window_title, text, selectable_text=False):
     msg.exec_()
 
 def verify_cfg(cfg):
-    """ Checks if cfg is not empty """
+    """ Checks if cfg is not empty and path to tdms exists """
     if cfg and 'signals' in cfg and 'tdms_path' in cfg:
         if Path(cfg['tdms_path']).exists():
             return True
