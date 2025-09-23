@@ -78,6 +78,14 @@ class Configurator(QDialog):
         self.layout.addWidget(self.signals_label)
         self.layout.addWidget(self.signals_text)
 
+        # Текстовое поле для параметров
+        self.parameters_label = QLabel("Параметры:")
+        self.parameters_text = QTextEdit()
+        self.parameters_text.setAcceptRichText(False)
+
+        self.layout.addWidget(self.parameters_label)
+        self.layout.addWidget(self.parameters_text)
+
         # Кнопки
         buttons_layout = QHBoxLayout()
         self.load_button = QPushButton("Загрузить конфиг")
@@ -132,7 +140,7 @@ class Configurator(QDialog):
             pop_up_window("Ошибка загрузки данных",
                         "Проверьте наличие TDMS файла и корректность сигналов")
 
-    # def apply_txt_config(self):
+    # def apply_txt_config(self): # using txt instead tdms signals # !!! not implemented
 
 
     def ok_button_pushed(self):
@@ -163,6 +171,9 @@ class Configurator(QDialog):
 
                     signals_text = yaml.dump(cfg.get('signals', {}))
                     self.signals_text.setPlainText(signals_text.strip())
+
+                    parameters_text = yaml.dump(cfg.get('parameters', {}))
+                    self.parameters_text.setPlainText(parameters_text.strip())
 
             except Exception as e:
                 pop_up_window("Ошибка", f"Не удалось загрузить файл:\n{str(e)}",
@@ -195,7 +206,7 @@ class Configurator(QDialog):
                 pop_up_window("Сохранение", "Конфигурация успешно сохранена!")
 
             except Exception as e:
-                pop_up_window("Ошибка", f"Не удалось загрузить файл:\n{str(e)}",
+                pop_up_window("Ошибка", f"Не удалось сохранить файл:\n{str(e)}",
                               selectable_text=True)
 
     def fill_cfg_with_data(self):
@@ -209,6 +220,11 @@ class Configurator(QDialog):
         signals_text = self.signals_text.toPlainText().strip()
         if signals_text is not None and len(signals_text) > 0:
             self.cfg['signals'] = yaml.safe_load(signals_text)
+
+        # put paramteres in cfg
+        parameters_text = self.parameters_text.toPlainText().strip()
+        if parameters_text is not None and len(parameters_text) > 0:
+            self.cfg['parameters'] = yaml.safe_load(parameters_text)
 
     def get_cfg(self):
         """Возвращает данные конфигурации"""
